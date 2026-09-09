@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fledge — card stack drawer</title>
+<meta name="theme-color" content="#12201b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fledge">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2312201b'/%3E%3Cpath d='M50 82 C50 82 30 68 30 42 C30 24 42 14 50 14 C58 14 70 24 70 42 C70 68 50 82 50 82 Z' fill='none' stroke='%23d9a54b' stroke-width='4'/%3E%3Cpath d='M50 82 L50 14 M50 30 L38 24 M50 42 L36 38 M50 54 L38 52 M50 66 L40 66' stroke='%23d9a54b' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2312201b'/%3E%3Cpath d='M50 82 C50 82 30 68 30 42 C30 24 42 14 50 14 C58 14 70 24 70 42 C70 68 50 82 50 82 Z' fill='none' stroke='%23d9a54b' stroke-width='4'/%3E%3Cpath d='M50 82 L50 14 M50 30 L38 24 M50 42 L36 38 M50 54 L38 52 M50 66 L40 66' stroke='%23d9a54b' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,560;9..144,640&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #12201b;
+    --panel: #1b2b24;
+    --panel-2: #223328;
+    --line: #33453a;
+    --paper: #f2ecda;
+    --paper-dim: #a7ab9e;
+    --gold: #d9a54b;
+    --gold-dim: #8a7345;
+    --teal: #6fada4;
+    --danger: #c1613f;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    color: var(--paper);
+    font-family:'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .serif{ font-family:'Fraunces', Georgia, serif; }
+  .app{
+    max-width:460px;
+    margin:0 auto;
+    padding:28px 20px calc(48px + env(safe-area-inset-bottom));
+  }
+  button{ font-family: inherit; }
+  button:focus-visible, input:focus-visible{
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
+
+  /* header */
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom: 30px;
+  }
+  .brand{ display:flex; gap:12px; align-items:center; }
+  .brand svg{ width:30px; height:30px; flex-shrink:0; color: var(--gold); }
+  .brand h1{
+    font-size: 26px;
+    font-weight: 560;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+  .brand .tag{
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--paper-dim);
+  }
+  .icon-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--paper-dim);
+    width: 40px; height: 40px;
+    border-radius: var(--radius);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{ border-color: var(--gold-dim); color: var(--paper); }
+  .icon-btn svg{ width:18px; height:18px; }
+  .icon-btn.confirm-pending{ border-color: var(--danger); color: var(--danger); background: rgba(193,97,63,0.12); }
+
+  /* hero */
+  .hero{
+    text-align:center;
+    padding: 34px 16px 30px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    margin-bottom: 28px;
+  }
+  .hero-label{
+    margin:0 0 10px;
+    font-size: 13px;
+    min-height: 16px;
+    color: var(--paper-dim);
+  }
+  #heroResultArea{
+    height: 172px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hero-name{
+    margin: 0;
+    font-size: 34px;
+    font-weight: 640;
+    line-height: 1.1;
+  }
+  .hero-name.slide-in, .hero-results.slide-in{ animation: slideUp .32s ease; }
+  @keyframes slideUp{
+    from{ opacity: 0; transform: translateY(14px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+  .hero-sub{
+    margin: 10px 0 22px;
+    font-size: 14px;
+    color: var(--paper-dim);
+    min-height: 18px;
+  }
+  .hero-results{
+    list-style:none;
+    counter-reset: draw-order;
+    margin: 0;
+    padding: 0;
+    max-width: 300px;
+    text-align: left;
+  }
+  .hero-results li{
+    counter-increment: draw-order;
+    display:flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+  .hero-results li::before{
+    content: counter(draw-order);
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--num-color, var(--gold));
+    min-width: 16px;
+  }
+  .draw-count{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+  .draw-count-options{
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .count-btn{
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--paper-dim);
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .count-btn:hover{ border-color: var(--gold-dim); color: var(--paper); }
+  .count-btn.active{
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #201404;
+    font-weight: 600;
+  }
+  .count-btn:disabled{
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .count-btn:disabled:hover{ border-color: var(--line); color: var(--paper-dim); }
+  .draw-btn{
+    background: var(--gold);
+    color: #201404;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 15px 34px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .draw-btn:hover{ background:#e6b458; }
+  .draw-btn:active{ transform: scale(0.97); }
+  .draw-btn:disabled{
+    background: var(--panel-2);
+    color: var(--paper-dim);
+    cursor: not-allowed;
+  }
+
+  /* sections */
+  .section-title{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--paper-dim);
+    margin: 0 0 12px;
+  }
+  .stacks{ margin-bottom: 26px; }
+
+  .stack-row{
+    border-bottom: 1px solid var(--line);
+    padding: 14px 2px;
+  }
+  .stack-row:first-child{ border-top: 1px solid var(--line); }
+  .stack-main{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .stack-name{
+    font-size: 17px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stack-count{
+    font-family:'Fraunces', serif;
+    font-size: 15px;
+    color: var(--paper-dim);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .stack-count b{ color: var(--paper); font-weight: 560; }
+  .stack-actions{
+    display:flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .mini-btn{
+    background: transparent;
+    border: none;
+    color: var(--paper-dim);
+    width: 30px; height:30px;
+    border-radius: 8px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .mini-btn:hover{ background: var(--panel-2); color: var(--paper); }
+  .mini-btn svg{ width:15px; height:15px; }
+  .mini-btn.danger:hover{ color: var(--danger); }
+  .mini-btn.confirm-pending{ background: rgba(193,97,63,0.15); color: var(--danger); }
+
+  .ticks{
+    display:flex;
+    gap: 2px;
+    margin-top: 9px;
+    height: 12px;
+  }
+  .tick{
+    flex:1;
+    border-radius: 2px 2px 1px 1px;
+    background: var(--line);
+  }
+  .tick.filled{ background: var(--gold); }
+  .stack-row.empty .stack-name{ color: var(--paper-dim); }
+
+  .edit-form{
+    display:flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .edit-form input{
+    background: var(--ink);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .edit-form input.name-input{ flex: 1 1 140px; min-width: 0; }
+  .edit-form input.count-input{ width: 84px; }
+  .edit-form input[type="color"].color-input{
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .edit-form input[type="color"].color-input::-webkit-color-swatch-wrapper{ padding: 2px; }
+  .edit-form input[type="color"].color-input::-webkit-color-swatch{ border: none; border-radius: 6px; }
+  .edit-form input[type="color"].color-input::-moz-color-swatch{ border: none; border-radius: 6px; }
+  .edit-form .form-actions{ display:flex; gap:6px; }
+  .form-btn{
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .form-btn.primary{ background: var(--gold); color:#201404; }
+  .form-btn.ghost{ background: transparent; color: var(--paper-dim); border: 1px solid var(--line); }
+
+  .add-row{ margin-top: 6px; }
+  .add-toggle{
+    width:100%;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--paper-dim);
+    padding: 13px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .add-toggle:hover{ border-color: var(--gold-dim); color: var(--paper); }
+  .add-toggle svg{ width:16px; height:16px; }
+  .add-form{
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .history ul{
+    list-style:none;
+    margin:0; padding:0;
+  }
+  .history li{
+    display:flex;
+    justify-content: space-between;
+    padding: 8px 2px;
+    font-size: 14px;
+    color: var(--paper-dim);
+    border-bottom: 1px solid var(--line);
+  }
+  .history li:last-child{ border-bottom:none; }
+  .history li span:first-child{ color: var(--paper); }
+  .history time{ font-variant-numeric: tabular-nums; }
+
+  .empty-note{
+    color: var(--paper-dim);
+    font-size: 14px;
+    padding: 6px 2px 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .hero-name.slide-in, .hero-results.slide-in{ animation:none; }
+    .draw-btn{ transition:none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M50 86 C50 86 28 70 28 41 C28 21 42 10 50 10 C58 10 72 21 72 41 C72 70 50 86 50 86 Z" stroke="currentColor" stroke-width="4.5"/>
+        <path d="M50 86 L50 10 M50 28 L36 21 M50 42 L34 38 M50 56 L36 53 M50 70 L38 69" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1 class="serif">Fledge</h1>
+        <p class="tag" id="totalsTag">Card stack drawer</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="reshuffleAllBtn" title="Reshuffle all stacks" aria-label="Reshuffle all stacks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+    </button>
+  </header>
+
+  <section class="hero" aria-live="polite">
+    <p class="hero-label" id="heroLabel">Ready when you are</p>
+    <div id="heroResultArea">
+      <p class="hero-name serif" id="heroName">—</p>
+    </div>
+    <p class="hero-sub" id="heroSub">Add a stack below to get started</p>
+    <div class="draw-count">
+      <div class="draw-count-options" id="drawCountOptions"></div>
+    </div>
+  </section>
+
+  <section class="stacks">
+    <p class="section-title">Stacks</p>
+    <div id="stackList"></div>
+    <div class="add-row" id="addRow"></div>
+  </section>
+
+  <section class="history" id="historySection" hidden>
+    <p class="section-title">Recent draws</p>
+    <ul id="historyList"></ul>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "fledge-state-v1";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var PALETTE = ["#e3c567", "#7fb3ab", "#c98a6b", "#9a86c9", "#6fada4", "#b5651d", "#a6789c", "#8f9779"];
+
+  var defaultState = {
+    stacks: [
+      { id: uid(), name: "Core Box", total: 170, remaining: 170, color: PALETTE[0] },
+      { id: uid(), name: "European Expansion", total: 81, remaining: 81, color: PALETTE[1] },
+      { id: uid(), name: "Oceania Expansion", total: 90, remaining: 90, color: PALETTE[2] },
+      { id: uid(), name: "Asia Expansion", total: 90, remaining: 90, color: PALETTE[3] }
+    ],
+    history: []
+  };
+
+  var state = loadState();
+  var ui = { addingOpen: false, editingId: null, drawCount: 1 };
+  var pendingAction = null; // { key, timer } — used for tap-again-to-confirm
+
+  function requestConfirm(key, onConfirm){
+    if(pendingAction && pendingAction.key === key){
+      clearTimeout(pendingAction.timer);
+      pendingAction = null;
+      onConfirm();
+      return;
+    }
+    if(pendingAction) clearTimeout(pendingAction.timer);
+    pendingAction = {
+      key: key,
+      timer: setTimeout(function(){ pendingAction = null; render(); }, 2500)
+    };
+    render();
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2, 10); }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return clone(defaultState);
+      var parsed = JSON.parse(raw);
+      if(!parsed || !Array.isArray(parsed.stacks)) return clone(defaultState);
+      if(!Array.isArray(parsed.history)) parsed.history = [];
+      return parsed;
+    }catch(e){
+      return clone(defaultState);
+    }
+  }
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ /* storage unavailable — app still works for this session */ }
+  }
+
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  // ---------- rendering ----------
+
+  function render(){
+    renderTotals();
+    renderStackList();
+    renderAddRow();
+    renderHistory();
+    renderDrawCountOptions();
+    renderReshuffleAllButton();
+  }
+
+  function renderDrawCountOptions(){
+    var wrap = document.getElementById("drawCountOptions");
+    var anyLeft = state.stacks.some(function(s){ return s.remaining > 0; }) && state.stacks.length > 0;
+    var html = "";
+    for(var n=1;n<=5;n++){
+      html += '<button type="button" class="count-btn' + (ui.drawCount === n ? ' active' : '') + '" data-count="' + n + '"' + (anyLeft ? '' : ' disabled') + '>' + n + '</button>';
+    }
+    wrap.innerHTML = html;
+  }
+
+  function renderReshuffleAllButton(){
+    var btn = document.getElementById("reshuffleAllBtn");
+    var pending = pendingAction && pendingAction.key === "reshuffleAll";
+    btn.classList.toggle("confirm-pending", !!pending);
+    btn.title = pending ? "Tap again to confirm" : "Reshuffle all stacks";
+  }
+
+  function renderTotals(){
+    var totalRemaining = state.stacks.reduce(function(a,s){ return a + s.remaining; }, 0);
+    var totalAll = state.stacks.reduce(function(a,s){ return a + s.total; }, 0);
+    var tag = document.getElementById("totalsTag");
+    if(state.stacks.length === 0){
+      tag.textContent = "Card stack drawer";
+    } else {
+      tag.textContent = totalRemaining + " of " + totalAll + " cards left";
+    }
+  }
+
+  function ticksHtml(remaining, total, color){
+    var segCount = 14;
+    var filled = total > 0 ? Math.round((remaining/total) * segCount) : 0;
+    var html = "";
+    for(var i=0;i<segCount;i++){
+      var style = i < filled ? ' style="background:' + escapeAttr(color || 'var(--gold)') + '"' : '';
+      html += '<div class="tick' + (i < filled ? ' filled' : '') + '"' + style + '></div>';
+    }
+    return html;
+  }
+
+  function renderStackList(){
+    var list = document.getElementById("stackList");
+    if(state.stacks.length === 0){
+      list.innerHTML = '<p class="empty-note">No stacks yet — add one below.</p>';
+      return;
+    }
+    list.innerHTML = state.stacks.map(function(s){
+      if(ui.editingId === s.id){
+        return editFormHtml(s);
+      }
+      var isEmpty = s.remaining <= 0;
+      return (
+        '<div class="stack-row' + (isEmpty ? ' empty' : '') + '" data-id="' + s.id + '">' +
+          '<div class="stack-main">' +
+            '<span class="stack-name" style="color:' + escapeAttr(s.color || 'inherit') + '">' + escapeHtml(s.name) + '</span>' +
+            '<div class="stack-actions">' +
+              '<span class="stack-count"><b>' + s.remaining + '</b> / ' + s.total + '</span>' +
+              '<button class="mini-btn" data-action="reshuffle" data-id="' + s.id + '" title="Reshuffle this stack" aria-label="Reshuffle ' + escapeHtml(s.name) + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>' +
+              '</button>' +
+              '<button class="mini-btn" data-action="edit" data-id="' + s.id + '" title="Edit" aria-label="Edit ' + escapeHtml(s.name) + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
+              '</button>' +
+              '<button class="mini-btn danger' + (pendingAction && pendingAction.key === "delete-" + s.id ? ' confirm-pending' : '') + '" data-action="delete" data-id="' + s.id + '" title="' + (pendingAction && pendingAction.key === "delete-" + s.id ? "Tap again to delete" : "Delete") + '" aria-label="Delete ' + escapeHtml(s.name) + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ticks" aria-hidden="true">' + ticksHtml(s.remaining, s.total, s.color) + '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  function editFormHtml(s){
+    return (
+      '<div class="stack-row" data-id="' + s.id + '">' +
+        '<div class="edit-form">' +
+          '<input class="color-input" type="color" value="' + escapeAttr(s.color || "#d9a54b") + '" data-field="color" aria-label="Stack color">' +
+          '<input class="name-input" type="text" value="' + escapeAttr(s.name) + '" data-field="name" maxlength="40" aria-label="Stack name">' +
+          '<input class="count-input" type="number" min="1" max="999" value="' + s.total + '" data-field="total" aria-label="Total cards in stack">' +
+          '<div class="form-actions">' +
+            '<button class="form-btn primary" data-action="save-edit" data-id="' + s.id + '">Save</button>' +
+            '<button class="form-btn ghost" data-action="cancel-edit" data-id="' + s.id + '">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderAddRow(){
+    var row = document.getElementById("addRow");
+    if(!ui.addingOpen){
+      row.innerHTML = '<button class="add-toggle" id="openAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add a stack</button>';
+      document.getElementById("openAddBtn").addEventListener("click", function(){
+        ui.addingOpen = true;
+        render();
+        var el = document.getElementById("newStackName");
+        if(el) el.focus();
+      });
+    } else {
+      var nextColor = PALETTE[state.stacks.length % PALETTE.length];
+      row.innerHTML =
+        '<div class="add-form">' +
+          '<div class="edit-form">' +
+            '<input class="color-input" type="color" value="' + nextColor + '" id="newStackColor" aria-label="Stack color">' +
+            '<input class="name-input" type="text" placeholder="Stack name" id="newStackName" maxlength="40">' +
+            '<input class="count-input" type="number" placeholder="Cards" min="1" max="999" id="newStackCount">' +
+            '<div class="form-actions">' +
+              '<button class="form-btn primary" id="confirmAddBtn">Add</button>' +
+              '<button class="form-btn ghost" id="cancelAddBtn">Cancel</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      document.getElementById("confirmAddBtn").addEventListener("click", handleAddStack);
+      document.getElementById("cancelAddBtn").addEventListener("click", function(){
+        ui.addingOpen = false; render();
+      });
+      document.getElementById("newStackCount").addEventListener("keydown", function(e){
+        if(e.key === "Enter") handleAddStack();
+      });
+    }
+  }
+
+  function renderHistory(){
+    var section = document.getElementById("historySection");
+    var list = document.getElementById("historyList");
+    if(state.history.length === 0){
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    list.innerHTML = state.history.slice(0, 8).map(function(h){
+      return '<li><span style="color:' + escapeAttr(h.color || 'inherit') + '">' + escapeHtml(h.name) + '</span><time>' + h.time + '</time></li>';
+    }).join("");
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+
+  // ---------- actions ----------
+
+  function handleAddStack(){
+    var colorEl = document.getElementById("newStackColor");
+    var nameEl = document.getElementById("newStackName");
+    var countEl = document.getElementById("newStackCount");
+    var name = (nameEl.value || "").trim();
+    var count = parseInt(countEl.value, 10);
+    if(!name){ nameEl.focus(); return; }
+    if(!count || count < 1){ countEl.focus(); return; }
+    state.stacks.push({ id: uid(), name: name, total: count, remaining: count, color: colorEl.value });
+    ui.addingOpen = false;
+    saveState();
+    render();
+  }
+
+  function handleSaveEdit(id){
+    var row = document.querySelector('.stack-row[data-id="' + id + '"]');
+    var colorEl = row.querySelector('input[data-field="color"]');
+    var nameEl = row.querySelector('input[data-field="name"]');
+    var totalEl = row.querySelector('input[data-field="total"]');
+    var name = (nameEl.value || "").trim();
+    var total = parseInt(totalEl.value, 10);
+    if(!name || !total || total < 1) return;
+    var stack = state.stacks.find(function(s){ return s.id === id; });
+    if(!stack) return;
+    stack.name = name;
+    stack.total = total;
+    stack.remaining = total; // editing counts as reshuffling this stack
+    stack.color = colorEl.value;
+    ui.editingId = null;
+    saveState();
+    render();
+  }
+
+  function drawOne(){
+    var pool = state.stacks.filter(function(s){ return s.remaining > 0; });
+    if(pool.length === 0) return null;
+    var totalWeight = pool.reduce(function(a,s){ return a + s.remaining; }, 0);
+    var r = Math.random() * totalWeight;
+    var chosen = pool[pool.length - 1];
+    for(var i=0;i<pool.length;i++){
+      if(r < pool[i].remaining){ chosen = pool[i]; break; }
+      r -= pool[i].remaining;
+    }
+    chosen.remaining -= 1;
+    return chosen;
+  }
+
+  function handleDraw(){
+    var requested = ui.drawCount;
+    var results = [];
+    for(var i=0;i<requested;i++){
+      var chosen = drawOne();
+      if(!chosen) break; // ran out of cards mid-batch
+      results.push(chosen);
+    }
+    if(results.length === 0) return;
+
+    var now = new Date();
+    var timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    results.forEach(function(chosen){
+      state.history.unshift({ name: chosen.name, time: timeStr, color: chosen.color });
+    });
+    state.history = state.history.slice(0, 8);
+    saveState();
+
+    var totalRemainingAfter = state.stacks.reduce(function(a,s){ return a + s.remaining; }, 0);
+    var resultArea = document.getElementById("heroResultArea");
+    var shortfall = results.length < requested;
+
+    document.getElementById("heroLabel").textContent = "Draw from";
+
+    resultArea.innerHTML = '<ol class="hero-results serif" id="heroName">' +
+      results.map(function(r){ return '<li style="color:' + escapeAttr(r.color || 'inherit') + ';--num-color:' + escapeAttr(r.color || 'inherit') + '">' + escapeHtml(r.name) + '</li>'; }).join("") +
+      '</ol>';
+
+    if(results.length === 1){
+      document.getElementById("heroSub").textContent = results[0].remaining + " left in this stack";
+    } else {
+      document.getElementById("heroSub").textContent = shortfall
+        ? "Only " + results.length + " card" + (results.length === 1 ? "" : "s") + " left to draw"
+        : totalRemainingAfter + " cards left overall";
+    }
+
+    var nameEl = document.getElementById("heroName");
+    if(!reduceMotion && nameEl){
+      nameEl.classList.remove("slide-in");
+      void nameEl.offsetWidth;
+      nameEl.classList.add("slide-in");
+    }
+
+    render();
+  }
+
+  // ---------- events ----------
+
+  document.getElementById("drawCountOptions").addEventListener("click", function(e){
+    var btn = e.target.closest(".count-btn");
+    if(!btn || btn.disabled) return;
+    ui.drawCount = parseInt(btn.getAttribute("data-count"), 10);
+    handleDraw();
+  });
+
+  document.getElementById("reshuffleAllBtn").addEventListener("click", function(){
+    if(state.stacks.length === 0) return;
+    requestConfirm("reshuffleAll", function(){
+      state.stacks.forEach(function(s){ s.remaining = s.total; });
+      document.getElementById("heroLabel").textContent = "Ready when you are";
+      document.getElementById("heroResultArea").innerHTML = '<p class="hero-name serif" id="heroName">—</p>';
+      document.getElementById("heroSub").textContent = "All stacks reshuffled";
+      saveState();
+      render();
+    });
+  });
+
+  document.getElementById("stackList").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-action]");
+    if(!btn) return;
+    var action = btn.getAttribute("data-action");
+    var id = btn.getAttribute("data-id");
+
+    if(action === "reshuffle"){
+      var s = state.stacks.find(function(x){ return x.id === id; });
+      if(s){ s.remaining = s.total; saveState(); render(); }
+    } else if(action === "edit"){
+      ui.editingId = id;
+      render();
+      var input = document.querySelector('.stack-row[data-id="' + id + '"] input[data-field="name"]');
+      if(input){ input.focus(); input.select(); }
+    } else if(action === "cancel-edit"){
+      ui.editingId = null;
+      render();
+    } else if(action === "save-edit"){
+      handleSaveEdit(id);
+    } else if(action === "delete"){
+      requestConfirm("delete-" + id, function(){
+        state.stacks = state.stacks.filter(function(x){ return x.id !== id; });
+        saveState();
+        render();
+      });
+    }
+  });
+
+  document.getElementById("stackList").addEventListener("keydown", function(e){
+    if(e.key === "Enter" && ui.editingId){
+      var row = e.target.closest(".stack-row");
+      if(row && row.getAttribute("data-id") === ui.editingId){
+        handleSaveEdit(ui.editingId);
+      }
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
