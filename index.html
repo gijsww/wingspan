@@ -135,14 +135,14 @@
     display:flex;
     align-items: baseline;
     gap: 10px;
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 600;
     padding: 4px 0;
   }
   .hero-results li::before{
     content: counter(draw-order);
     font-family: 'Fraunces', serif;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--num-color, var(--gold));
     min-width: 16px;
   }
@@ -664,6 +664,23 @@
     return chosen;
   }
 
+  function groupResultsByStack(results){
+    var order = [];
+    var byName = {};
+    results.forEach(function(r){
+      if(!byName[r.name]){
+        byName[r.name] = [];
+        order.push(byName[r.name]);
+      }
+      byName[r.name].push(r);
+    });
+    var flat = [];
+    order.forEach(function(group){
+      group.forEach(function(r){ flat.push(r); });
+    });
+    return flat;
+  }
+
   function handleDraw(){
     var requested = ui.drawCount;
     var results = [];
@@ -689,7 +706,9 @@
     document.getElementById("heroLabel").textContent = "Draw from";
 
     resultArea.innerHTML = '<ol class="hero-results serif" id="heroName">' +
-      results.map(function(r){ return '<li style="color:' + escapeAttr(r.color || 'inherit') + ';--num-color:' + escapeAttr(r.color || 'inherit') + '">' + escapeHtml(r.name) + '</li>'; }).join("") +
+      groupResultsByStack(results).map(function(r){
+        return '<li style="color:' + escapeAttr(r.color || 'inherit') + ';--num-color:' + escapeAttr(r.color || 'inherit') + '">' + escapeHtml(r.name) + '</li>';
+      }).join("") +
       '</ol>';
 
     if(results.length === 1){
