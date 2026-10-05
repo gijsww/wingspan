@@ -665,20 +665,13 @@
   }
 
   function groupResultsByStack(results){
-    var order = [];
-    var byName = {};
-    results.forEach(function(r){
-      if(!byName[r.name]){
-        byName[r.name] = [];
-        order.push(byName[r.name]);
-      }
-      byName[r.name].push(r);
+    var indexById = {};
+    state.stacks.forEach(function(s, i){ indexById[s.id] = i; });
+    return results.slice().sort(function(a, b){
+      var ia = indexById.hasOwnProperty(a.id) ? indexById[a.id] : 999999;
+      var ib = indexById.hasOwnProperty(b.id) ? indexById[b.id] : 999999;
+      return ia - ib;
     });
-    var flat = [];
-    order.forEach(function(group){
-      group.forEach(function(r){ flat.push(r); });
-    });
-    return flat;
   }
 
   function handleDraw(){
